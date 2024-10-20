@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Buscador de Palabras</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+</head>
+
+<body>
+    <h1>Buscador de Palabras</h1>
+    <form method="post" enctype="multipart/form-data" th:action="@{/search}">
+        <input type="file" name="file" required><br>
+        <label for="word">Palabra a buscar:</label>
+        <input type="text" name="word" required><br>
+        <label for="algorithm">Algoritmo:</label>
+        <select name="algorithm">
+            <option value="KMP">KMP</option>
+            <option value="BoyerMoore">Boyer-Moore</option>
+        </select><br>
+        <button type="submit">Buscar</button>
+    </form>
+
+    <!-- Mostrar resultados si hay coincidencias -->
+    <div th:if="${positions}">
+        <p>Se encontraron <span th:text="${count}"></span> coincidencias.</p>
+        <p>Navega entre coincidencias con las flechas (↑, ↓) o Enter.</p>
+
+        <p>Contenido del archivo:</p>
+        <pre id="contentArea" th:utext="${content}"></pre>
+
+        <!-- Incluimos un campo oculto para las posiciones -->
+        <input type="hidden" id="positions" th:value="${positions}">
+    </div>
+
+    <!-- Scripts para manejar resaltado y navegación -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let currentPosition = 0;
+            const contentArea = document.getElementById('contentArea');
+            const positions = JSON.parse(document.getElementById('positions').value); // Obtener posiciones
+            const word = "[[${word}]]"; // Palabra a buscar
+
+            // Función para resaltar todas las coincidencias en el contenido
+            function highlightAll() {
+                let content = contentArea.innerHTML;
+                let regex = new RegExp(`(${word})`, 'gi');  // Case insensitive
+                content = content.replace(regex, '<span class="highlight">$1</span>');
+                contentArea.innerHTML = content;
+            }
+
+            // Función para resaltar la posición actual
+            function highlightCurrent(index) {
+                const highlights = document.querySelectorAll('.highlight');
+                highlights.forEach(h => h.classList.remove('current-position'));
+                if (highlights[index]) {
+                    highlights[index].classList.add('current-position');
+                    highlights[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+
+            // Navegación de coincidencias
+            function navigateResults(direction) {
+                currentPosition += direction;
+                if (currentPosition < 0) {
+                    currentPosition = positions.length - 1;
+                } else if (currentPosition >= positions.length) {
+                    currentPosition = 0;
+                }
+                highlightCurrent(currentPosition);
+                updateCounter();
+            }
+
+            // Actualizar el contador de coincidencias (Ej: 5/8)
+            function updateCounter() {
+                const counter = document.querySelector('p > span');
+                counter.innerText = `${currentPosition + 1}/${positions.length}`;
+            }
+
+            // Eventos de teclado para avanzar o retroceder
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                    e.preventDefault();  // Evitar comportamiento predeterminado
+                    navigateResults(1);  // Avanzar a la siguiente coincidencia
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateResults(-1);  // Retroceder a la coincidencia anterior
+                }
+            });
+
+            // Inicializamos el resaltado y la navegación
+            highlightAll();
+            highlightCurrent(currentPosition);
+            updateCounter();
+        });
+    </script>
+</body>
+
+</html>
