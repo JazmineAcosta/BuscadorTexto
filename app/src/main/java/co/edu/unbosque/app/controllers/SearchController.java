@@ -10,9 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.ui.Model;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @Controller
@@ -21,6 +18,34 @@ public class SearchController {
     @GetMapping("/")
     public String index() {
         return "search"; // Carga la vista search.html
+    }
+
+    @PostMapping("/upload")
+    public String uploadFile(
+        @RequestParam("file") MultipartFile file, 
+        Model model) {
+
+        // Verificar si el archivo está vacío
+        if (file.isEmpty()) {
+            model.addAttribute("error", "Debe seleccionar un archivo válido");
+            return "search";
+        }
+
+        try {
+            // Leer el archivo y convertirlo en un String
+            byte[] bytes = file.getBytes();
+            String content = new String(bytes);
+
+            // Agregar el contenido del archivo al modelo
+            model.addAttribute("content", content);
+
+        } catch (IOException e) {
+            // Manejar posibles errores de lectura del archivo
+            model.addAttribute("error", "Error al leer el archivo: " + e.getMessage());
+            return "search";
+        }
+
+        return "search"; // Cargar la vista con el contenido del archivo
     }
 
     @PostMapping("/search")
