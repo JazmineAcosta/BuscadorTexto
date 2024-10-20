@@ -1,5 +1,12 @@
+"java.configuration.runtimes": [
+    {
+        "name": "jdk-23_windows-x64_bin",
+        "path": "R:/Descargas/jdk-23_windows-x64_bin.exe",
+        "default": true
+    }
+]
+
 {
   "java.configuration.updateBuildConfiguration": "automatic",
-  "CodeGPT.apiKey": "CodeGPT Plus Beta",
   "java.compile.nullAnalysis.mode": "automatic"
 }

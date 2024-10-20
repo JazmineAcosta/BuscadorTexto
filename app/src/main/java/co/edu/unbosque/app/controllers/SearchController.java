@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.ui.Model;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-//import java.nio.file.Paths;
+import java.nio.file.Paths;
 import java.util.List;
-//import java.io.IOException;
 
 @Controller
 public class SearchController {
@@ -24,31 +24,43 @@ public class SearchController {
     }
 
     @PostMapping("/search")
-    public String searchWord(@RequestParam("file") MultipartFile file,
-                             @RequestParam("word") String word,
-                             @RequestParam("algorithm") String algorithm,
-                             Model model) throws Exception {
-        // Leer el archivo
-        Path tempFile = Files.createTempFile(null, ".txt");
-        file.transferTo(tempFile);
-        
-        // Read file content as a string
-        String content = new String(Files.readAllBytes(tempFile));
-        
-        // Elegir algoritmo
-        List<Integer> positions;
-        if ("KMP".equals(algorithm)) {
-            positions = KMPAlgorithm.search(content, word);
-        } else {
-            positions = BoyerMooreAlgorithm.search(content, word);
+    public String searchWord(
+        @RequestParam("file") MultipartFile file, 
+        @RequestParam("word") String word, 
+        @RequestParam("algorithm") String algorithm, 
+        Model model) {
+
+        // Verificar si el archivo está vacío
+        if (file.isEmpty()) {
+            model.addAttribute("error", "Debe seleccionar un archivo válido");
+            return "search";
         }
-        
-        // Agregar resultados al modelo
-        model.addAttribute("positions", positions);
-        model.addAttribute("count", positions.size());
-        model.addAttribute("word", word);
-        model.addAttribute("content", content);
-        
+
+        try {
+            // Leer el archivo y convertirlo en un String
+            byte[] bytes = file.getBytes();
+            String content = new String(bytes);
+
+            // Elegir el algoritmo de búsqueda
+            List<Integer> positions;
+            if ("KMP".equals(algorithm)) {
+                positions = KMPAlgorithm.search(content, word);
+            } else {
+                positions = BoyerMooreAlgorithm.search(content, word);
+            }
+
+            // Agregar los resultados al modelo
+            model.addAttribute("positions", positions);
+            model.addAttribute("count", positions.size());
+            model.addAttribute("word", word);
+            model.addAttribute("content", content);
+
+        } catch (IOException e) {
+            // Manejar posibles errores de lectura del archivo
+            model.addAttribute("error", "Error al leer el archivo: " + e.getMessage());
+            return "search";
+        }
+
         return "search";
     }
 }
